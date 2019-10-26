@@ -207,7 +207,9 @@ class AtmController {
         @RequestParam("sw", required = true)
         sw: String,
         @RequestParam("canDeposit", required = false)
-        canDeposit: Boolean?
+        canDeposit: Boolean?,
+        @RequestParam("usePrediction", required = false)
+        usePrediction: Boolean?
     ): ResponseEntity<AtmSearchResult> {
         val userLocation = if (location == null) {
             null

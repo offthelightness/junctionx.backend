@@ -31,7 +31,7 @@ class AtmSearchService {
             convertToAtmOutputData(it, userLocation)
         }.sortedBy { it.distanceInMeters ?: 0.0 }
 
-        val closestAtm = atmOutputDataList.first()
+        val closestAtm = atmOutputDataList.firstOrNull()
 //        val furthestAtm = atmOutputDataList.last()
 //
 //        val bestAtm = atmOutputDataList.map {
