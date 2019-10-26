@@ -22,7 +22,7 @@ class AtmController {
         @RequestParam("sw", required = true)
         sw: String,
         @RequestParam("canDeposit", required = false)
-        canDeposit: Boolean
+        canDeposit: Boolean?
     ): ResponseEntity<GetAtmResponse> {
         val itemsMap = HashMap<String, Atm>()
         File("/Users/avanisimov/Downloads/atm_201909_IX_eng.txt")
@@ -52,14 +52,19 @@ class AtmController {
         val west = sw.split(',')[1].toDouble()
 
         val filteredItems = items.filter {
-            if (it.geoX > south
-                && it.geoX < nord
-                && it.geoY > west
-                && it.geoY < east
+            if (it.geoX < south
+                || it.geoX > nord
+                || it.geoY < west
+                || it.geoY > east
             ) {
-                return@filter true
+                return@filter false
             }
-            return@filter false
+            if (canDeposit != null) {
+                if (it.canDeposit != canDeposit) {
+                    return@filter false
+                }
+            }
+            return@filter true
         }
         return ResponseEntity.ok(
             GetAtmResponse(
