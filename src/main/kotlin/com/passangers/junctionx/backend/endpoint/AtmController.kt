@@ -5,14 +5,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.io.BufferedReader
 import java.io.File
-import java.io.FileReader
 import java.nio.charset.Charset
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
-import kotlin.collections.HashSet
 
 @RestController
 class AtmController {
@@ -33,7 +29,8 @@ class AtmController {
             .forEachLine(Charset.forName("windows-1252")) { line ->
                 val dataArray = line.split('\t')
                 if (dataArray[4] != "STREET_ADDRESS") {
-                    itemsMap.put(dataArray[4],
+                    itemsMap.put(
+                        dataArray[4],
                         Atm(
                             id = UUID.randomUUID(),
                             city = dataArray[3],
@@ -47,11 +44,27 @@ class AtmController {
                 }
             }
 
-        val items = itemsMap.values.toList();
+        val items = itemsMap.values.toList()
+
+        val nord = ne.split(',')[0].toDouble()
+        val east = ne.split(',')[1].toDouble()
+        val south = sw.split(',')[0].toDouble()
+        val west = sw.split(',')[1].toDouble()
+
+        val filteredItems = items.filter {
+            if (it.geoX > south
+                && it.geoX < nord
+                && it.geoY > west
+                && it.geoY < east
+            ) {
+                return@filter true
+            }
+            return@filter false
+        }
         return ResponseEntity.ok(
             GetAtmResponse(
-                items.size,
-                items
+                filteredItems.size,
+                filteredItems
             )
         )
     }
