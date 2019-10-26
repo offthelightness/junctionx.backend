@@ -5,7 +5,7 @@ import javax.persistence.Entity
 import javax.persistence.Id
 
 @Entity
-class Atm(
+data class Atm(
     @Id
     val id: UUID = UUID.randomUUID(),
     val city: String = "",

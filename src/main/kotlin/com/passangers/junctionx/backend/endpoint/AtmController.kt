@@ -1,7 +1,9 @@
 package com.passangers.junctionx.backend.endpoint
 
 import com.passangers.junctionx.backend.model.Atm
+import com.passangers.junctionx.backend.model.AtmLoad
 import com.passangers.junctionx.backend.model.GeoPoint
+import com.passangers.junctionx.backend.repo.AtmLoadRepository
 import com.passangers.junctionx.backend.repo.AtmRepository
 import com.passangers.junctionx.backend.service.AtmSearchResult
 import com.passangers.junctionx.backend.service.AtmSearchService
@@ -14,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.io.File
 import java.nio.charset.Charset
+import java.time.DayOfWeek
+import java.time.LocalTime
+import java.time.temporal.TemporalUnit
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -22,6 +27,8 @@ class AtmController {
 
     @Autowired
     lateinit var atmRepository: AtmRepository
+    @Autowired
+    lateinit var atmLoadRepository: AtmLoadRepository
 
     @Autowired
     lateinit var geoService: GeoService
@@ -101,23 +108,40 @@ class AtmController {
         @RequestParam("canDeposit", required = false)
         canDeposit: Boolean?
     ): ResponseEntity<GetAtmResponseWithDistance> {
+
+        val atmsFindAll = atmRepository.findAll()
         val itemsMap = HashMap<String, Atm>()
         File("/Users/avanisimov/Downloads/atm_201909_IX_eng.txt")
             .forEachLine(Charset.forName("windows-1252")) { line ->
                 val dataArray = line.split('\t')
                 if (dataArray[4] != "STREET_ADDRESS") {
-                    itemsMap.put(
-                        dataArray[4],
-                        Atm(
-                            id = UUID.randomUUID(),
-                            city = dataArray[3],
-                            zipCD = dataArray[2],
-                            address = dataArray[4],
-                            geoX = dataArray[5].replace(',', '.').toDouble(),
-                            geoY = dataArray[6].replace(',', '.').toDouble(),
-                            canDeposit = dataArray[1] == "Y"
+                    val targetAtm = atmsFindAll.find {
+                        it.address == dataArray[4]
+                    }
+                    val weekOfDayString = dataArray[7]
+
+                    println("dataArray[7] -> ${dataArray[7]}")
+                    val dayOfWeek = if (weekOfDayString.contains("FRI")) {
+                        DayOfWeek.FRIDAY
+                    } else if (weekOfDayString.contains("SAT")) {
+                        DayOfWeek.SATURDAY
+                    } else {
+                        DayOfWeek.SUNDAY
+                    }
+                    for (i in 8..55) {
+                        val period = (i - 8)
+                        val periodStart = period * 30 * 60L
+                        val periodEnd = (period + 1) * 30 * 60L
+                        val atmLoad = AtmLoad(
+                            UUID.randomUUID(),
+                            targetAtm!!.id,
+                            dayOfWeek,
+                            periodStart,
+                            periodEnd,
+                            dataArray[i].toInt()
                         )
-                    )
+//                        atmLoadRepository.save(atmLoad)
+                    }
                 }
             }
 

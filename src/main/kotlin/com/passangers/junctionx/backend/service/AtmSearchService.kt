@@ -3,6 +3,7 @@ package com.passangers.junctionx.backend.service
 import com.passangers.junctionx.backend.model.Atm
 import com.passangers.junctionx.backend.model.GeoPoint
 import com.passangers.junctionx.backend.model.LoadLevel
+import com.passangers.junctionx.backend.repo.AtmLoadRepository
 import com.passangers.junctionx.backend.repo.AtmRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -13,6 +14,8 @@ class AtmSearchService {
 
     @Autowired
     lateinit var atmRepository: AtmRepository
+    @Autowired
+    lateinit var atmLoadRepository: AtmLoadRepository
 
     @Autowired
     lateinit var geoService: GeoService
@@ -22,7 +25,6 @@ class AtmSearchService {
         userLocation: GeoPoint?,
         canDeposit: Boolean?
     ): AtmSearchResult {
-        val now = LocalDateTime.now()
         val findAtms = findAtms(searchArea, canDeposit)
 
         val atmOutputDataList = findAtms.map {
@@ -30,19 +32,15 @@ class AtmSearchService {
         }.sortedBy { it.distanceInMeters ?: 0.0 }
 
         val closestAtm = atmOutputDataList.first()
-
-//            .map {
+//        val furthestAtm = atmOutputDataList.last()
+//
+//        val bestAtm = atmOutputDataList.map {
 //            calculateScore(it)
-//        }.sortedBy { it.score }
+//        }.sortedBy { it.score }.firstOrNull()
         return AtmSearchResult(
             closestAtm,
             atmOutputDataList
         )
-    }
-
-    private fun calculateScore(atmOutputData: AtmOutputData): AtmWithScore {
-        val score = 100.0
-        return AtmWithScore(atmOutputData, score)
     }
 
     private fun findAtms(
@@ -67,17 +65,24 @@ class AtmSearchService {
     }
 
     private fun convertToAtmOutputData(atm: Atm, userLocation: GeoPoint?): AtmOutputData {
-        val atmLoadAbsoluteValue = Math.random() * 60
-        val loadLevel = if (atmLoadAbsoluteValue < 10) {
-            LoadLevel.EMPTY
-        } else if (atmLoadAbsoluteValue < 20) {
-            LoadLevel.LEVEL_1
-        } else if (atmLoadAbsoluteValue < 30) {
-            LoadLevel.LEVEL_2
-        } else if (atmLoadAbsoluteValue < 40) {
-            LoadLevel.LEVEL_3
+        val now = LocalDateTime.now()
+        val atmLoad = atmLoadRepository.findByAtmID(atm.id).find {
+            return@find it.dayOfWeek == now.dayOfWeek
+                    && it.periodStart < now.toLocalTime().toSecondOfDay()
+                    && it.periodEnd >= now.toLocalTime().toSecondOfDay()
+        }
+        val atmLoadAbsoluteValue = if (atmLoad != null) {
+            atmLoad.transactionsCount
         } else {
-            LoadLevel.LEVEL_4
+            0
+        }
+
+        val loadLevel = when {
+            atmLoadAbsoluteValue < 10 -> LoadLevel.EMPTY
+            atmLoadAbsoluteValue < 20 -> LoadLevel.LEVEL_1
+            atmLoadAbsoluteValue < 30 -> LoadLevel.LEVEL_2
+            atmLoadAbsoluteValue < 40 -> LoadLevel.LEVEL_3
+            else -> LoadLevel.LEVEL_4
         }
         val distanceInMeters = if (userLocation == null) {
             null
@@ -89,7 +94,7 @@ class AtmSearchService {
 }
 
 data class AtmSearchResult(
-    val bestAtm: AtmOutputData,
+    val bestAtm: AtmOutputData?,
     val items: List<AtmOutputData>
 )
 
