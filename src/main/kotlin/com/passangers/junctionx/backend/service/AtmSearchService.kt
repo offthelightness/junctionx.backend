@@ -66,16 +66,12 @@ class AtmSearchService {
 
     private fun convertToAtmOutputData(atm: Atm, userLocation: GeoPoint?): AtmOutputData {
         val now = LocalDateTime.now()
-        val atmLoad = atmLoadRepository.findByAtmID(atm.id).find {
-            return@find it.dayOfWeek == now.dayOfWeek
-                    && it.periodStart < now.toLocalTime().toSecondOfDay()
-                    && it.periodEnd >= now.toLocalTime().toSecondOfDay()
-        }
-        val atmLoadAbsoluteValue = if (atmLoad != null) {
-            atmLoad.transactionsCount
-        } else {
-            0
-        }
+        val atmLoad = atmLoadRepository.findByAtmIDForConcreteDayAndPeriod(
+            atm.id,now.dayOfWeek,
+            now.toLocalTime().toSecondOfDay().toLong(),
+            now.toLocalTime().toSecondOfDay().toLong()
+        ).firstOrNull()
+        val atmLoadAbsoluteValue = atmLoad?.transactionsCount ?: 0
 
         val loadLevel = when {
             atmLoadAbsoluteValue < 10 -> LoadLevel.EMPTY

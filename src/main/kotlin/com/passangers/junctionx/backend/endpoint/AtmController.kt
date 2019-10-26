@@ -115,33 +115,45 @@ class AtmController {
             .forEachLine(Charset.forName("windows-1252")) { line ->
                 val dataArray = line.split('\t')
                 if (dataArray[4] != "STREET_ADDRESS") {
-                    val targetAtm = atmsFindAll.find {
-                        it.address == dataArray[4]
-                    }
-                    val weekOfDayString = dataArray[7]
-
-                    println("dataArray[7] -> ${dataArray[7]}")
-                    val dayOfWeek = if (weekOfDayString.contains("FRI")) {
-                        DayOfWeek.FRIDAY
-                    } else if (weekOfDayString.contains("SAT")) {
-                        DayOfWeek.SATURDAY
-                    } else {
-                        DayOfWeek.SUNDAY
-                    }
-                    for (i in 8..55) {
-                        val period = (i - 8)
-                        val periodStart = period * 30 * 60L
-                        val periodEnd = (period + 1) * 30 * 60L
-                        val atmLoad = AtmLoad(
-                            UUID.randomUUID(),
-                            targetAtm!!.id,
-                            dayOfWeek,
-                            periodStart,
-                            periodEnd,
-                            dataArray[i].toInt()
+//                    val targetAtm = atmsFindAll.find {
+//                        it.address == dataArray[4]
+//                    }
+                    itemsMap.put(
+                        dataArray[4],
+                        Atm(
+                            id = UUID.randomUUID(),
+                            city = dataArray[3],
+                            zipCD = dataArray[2],
+                            address = dataArray[4],
+                            geoX = dataArray[5].replace(',', '.').toDouble(),
+                            geoY = dataArray[6].replace(',', '.').toDouble(),
+                            canDeposit = dataArray[1] == "Y"
                         )
-//                        atmLoadRepository.save(atmLoad)
-                    }
+                    )
+//                    val weekOfDayString = dataArray[7]
+//
+//                    println("dataArray[7] -> ${dataArray[7]}")
+//                    val dayOfWeek = if (weekOfDayString.contains("FRI")) {
+//                        DayOfWeek.FRIDAY
+//                    } else if (weekOfDayString.contains("SAT")) {
+//                        DayOfWeek.SATURDAY
+//                    } else {
+//                        DayOfWeek.SUNDAY
+//                    }
+//                    for (i in 8..55) {
+//                        val period = (i - 8)
+//                        val periodStart = period * 30 * 60L
+//                        val periodEnd = (period + 1) * 30 * 60L
+//                        val atmLoad = AtmLoad(
+//                            UUID.randomUUID(),
+//                            targetAtm!!.id,
+//                            dayOfWeek,
+//                            periodStart,
+//                            periodEnd,
+//                            dataArray[i].toInt()
+//                        )
+////                        atmLoadRepository.save(atmLoad)
+//                    }
                 }
             }
 
