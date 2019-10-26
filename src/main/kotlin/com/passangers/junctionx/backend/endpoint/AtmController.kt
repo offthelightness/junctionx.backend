@@ -3,7 +3,10 @@ package com.passangers.junctionx.backend.endpoint
 import com.passangers.junctionx.backend.model.Atm
 import com.passangers.junctionx.backend.model.GeoPoint
 import com.passangers.junctionx.backend.repo.AtmRepository
+import com.passangers.junctionx.backend.service.AtmSearchResult
+import com.passangers.junctionx.backend.service.AtmSearchService
 import com.passangers.junctionx.backend.service.GeoService
+import com.passangers.junctionx.backend.service.SearchArea
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -22,6 +25,9 @@ class AtmController {
 
     @Autowired
     lateinit var geoService: GeoService
+
+    @Autowired
+    lateinit var atmSearchService: AtmSearchService
 
     @GetMapping("atm")
     fun getAtms(
@@ -153,6 +159,38 @@ class AtmController {
                 filteredItems.size,
                 filteredItems
             )
+        )
+    }
+
+    @GetMapping("atm/v3")
+    fun getAtmsV3(
+        @RequestParam("location", required = false)
+        location: String?,
+        @RequestParam("ne", required = true)
+        ne: String,
+        @RequestParam("sw", required = true)
+        sw: String,
+        @RequestParam("canDeposit", required = false)
+        canDeposit: Boolean?
+    ): ResponseEntity<AtmSearchResult> {
+        val userLocation = if (location == null) {
+            null
+        } else {
+            GeoPoint(
+                location.split(',')[0].toDouble(),
+                location.split(',')[1].toDouble()
+            )
+        }
+        val atmSearchResult = atmSearchService.getAtms(
+            SearchArea(
+                ne.split(',')[0].toDouble(),
+                sw.split(',')[0].toDouble(),
+                ne.split(',')[1].toDouble(),
+                sw.split(',')[1].toDouble()
+            ), userLocation, canDeposit
+        )
+        return ResponseEntity.ok(
+            atmSearchResult
         )
     }
 }
