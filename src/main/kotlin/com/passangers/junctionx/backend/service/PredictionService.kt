@@ -15,6 +15,8 @@ class PredictionService {
         val AVERAGE_PEDESTRIAN_SPEED = 5000 / 60
         val STATISTICS_DAYS = 4
         val MINUTES_IN_STATISTICS_SLOT = 30
+        val ADDITIONAL_SEARCH_RADIUS_IN_METERS = 100
+
     }
 
     @Autowired

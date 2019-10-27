@@ -6,6 +6,9 @@ import com.passangers.junctionx.backend.model.LoadLevel
 import com.passangers.junctionx.backend.repo.AtmIntentRepository
 import com.passangers.junctionx.backend.repo.AtmLoadRepository
 import com.passangers.junctionx.backend.repo.AtmRepository
+import com.passangers.junctionx.backend.service.PredictionService.Companion.ADDITIONAL_SEARCH_RADIUS_IN_METERS
+import com.passangers.junctionx.backend.service.PredictionService.Companion.AVERAGE_PEDESTRIAN_SPEED
+import com.passangers.junctionx.backend.service.PredictionService.Companion.AVERAGE_SESSION_TIME_IN_MINUTES
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -32,7 +35,7 @@ class AtmSearchService {
         searchArea: SearchArea,
         userLocation: GeoPoint?,
         canDeposit: Boolean?,
-        usePrediction : Boolean?
+        usePrediction: Boolean?
     ): AtmSearchResult {
         val findAtms = findAtms(searchArea, canDeposit)
 
@@ -46,16 +49,33 @@ class AtmSearchService {
                 atmOutputDataList
             )
         } else {
-            return if (usePrediction == null || usePrediction == false ) {
-                val closestAtm = atmOutputDataList.firstOrNull()
+            val closestAtm = atmOutputDataList.firstOrNull()
+            val distanceBetweenUserAndClosestATM = closestAtm?.lineDistanceInMeters?: 0.0
+            return if (usePrediction == null || usePrediction == false) {
                 AtmSearchResult(
                     closestAtm,
                     atmOutputDataList
                 )
             } else {
+                val potentialGoodATMs = atmOutputDataList.filter {
+                   (it.lineDistanceInMeters?.minus(distanceBetweenUserAndClosestATM) ?: Double.MAX_VALUE) < ADDITIONAL_SEARCH_RADIUS_IN_METERS
+                }
+
+                val potentialGoodATMsWithScore =  potentialGoodATMs.map {
+                  return@map  AtmWithScore(it,
+                        it.realDistanceInMeters?.div(AVERAGE_PEDESTRIAN_SPEED) ?: Double.MAX_VALUE
+                                +  predictionService.getAverageHistoricalWaitingTime(it.atm.id)
+                                +  atmIntentRepository.findCountOfIntentForATM(it.atm.id) * AVERAGE_SESSION_TIME_IN_MINUTES)
+                }.sortedBy {
+                    it.score
+                }
+
+                potentialGoodATMsWithScore.forEach {
+                    println(it)
+                }
 
                 AtmSearchResult(
-                    null,
+                    potentialGoodATMsWithScore.firstOrNull()?.atmOutputData,
                     atmOutputDataList
                 )
             }
@@ -112,9 +132,16 @@ class AtmSearchService {
         }
 
         val averageHistoricalWaitingTime = predictionService.getAverageHistoricalWaitingTime(atm.id)
-        val realtimeWaitingTime = atmIntentRepository.findCountOfIntentForATM(atm.id)
+        val realtimeWaitingTime = atmIntentRepository.findCountOfIntentForATM(atm.id).toDouble() * AVERAGE_SESSION_TIME_IN_MINUTES
 
-        return AtmOutputData(atm, loadLevel, lineDistanceInMeters, realDistanceInMeters, averageHistoricalWaitingTime, 0.0)
+        return AtmOutputData(
+            atm,
+            loadLevel,
+            lineDistanceInMeters,
+            realDistanceInMeters,
+            averageHistoricalWaitingTime,
+            realtimeWaitingTime
+        )
     }
 }
 
@@ -137,4 +164,9 @@ data class SearchArea(
     val south: Double,
     val east: Double,
     val west: Double
+)
+
+data class AtmWithScore(
+    val atmOutputData: AtmOutputData,
+    val score: Double
 )

@@ -6,15 +6,13 @@ import com.passangers.junctionx.backend.model.GeoPoint
 import com.passangers.junctionx.backend.repo.AtmIntentRepository
 import com.passangers.junctionx.backend.repo.AtmLoadRepository
 import com.passangers.junctionx.backend.repo.AtmRepository
-import com.passangers.junctionx.backend.service.AtmSearchResult
-import com.passangers.junctionx.backend.service.AtmSearchService
-import com.passangers.junctionx.backend.service.GeoService
-import com.passangers.junctionx.backend.service.SearchArea
+import com.passangers.junctionx.backend.service.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.io.File
 import java.nio.charset.Charset
+import java.time.LocalDateTime
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -129,30 +127,6 @@ class AtmController {
                             canDeposit = dataArray[1] == "Y"
                         )
                     )
-//                    val weekOfDayString = dataArray[7]
-//
-//                    println("dataArray[7] -> ${dataArray[7]}")
-//                    val dayOfWeek = if (weekOfDayString.contains("FRI")) {
-//                        DayOfWeek.FRIDAY
-//                    } else if (weekOfDayString.contains("SAT")) {
-//                        DayOfWeek.SATURDAY
-//                    } else {
-//                        DayOfWeek.SUNDAY
-//                    }
-//                    for (i in 8..55) {
-//                        val period = (i - 8)
-//                        val periodStart = period * 30 * 60L
-//                        val periodEnd = (period + 1) * 30 * 60L
-//                        val atmLoad = AtmLoad(
-//                            UUID.randomUUID(),
-//                            targetAtm!!.id,
-//                            dayOfWeek,
-//                            periodStart,
-//                            periodEnd,
-//                            dataArray[i].toInt()
-//                        )
-////                        atmLoadRepository.save(atmLoad)
-//                    }
                 }
             }
 
