@@ -34,18 +34,35 @@ class GeoService {
     }
 
 
-    fun getRealDistance(pointA: GeoPoint, pointB: GeoPoint): Double {
-        restTemplate.exchange(
+    fun getRealDistance(pointA: GeoPoint, pointB: GeoPoint): Double? {
+        val response = restTemplate.exchange(
             "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial" +
                     "&origins=${pointA.latitude},${pointA.longitude}" +
                     "&destinations=${pointB.latitude},${pointB.longitude}" +
                     "&key=$apiKey",
             HttpMethod.GET,
             null,
-            object : ParameterizedTypeReference<Any>() {
+            object : ParameterizedTypeReference<DataMatrixAPIResponse>() {
 
             })
 
-        return 0.0
+        return response.body?.rows?.firstOrNull()?.elements?.firstOrNull()?.distance?.value?.toDouble()
     }
 }
+
+data class DataMatrixAPIResponse constructor(
+    val rows: List<Row>? = null
+)
+
+data class Row (
+    val elements: List<Element>? = null
+)
+
+data class Element(
+    val distance: Distance? = null
+)
+
+data class Distance(
+    val value : Int? = null
+)
+
