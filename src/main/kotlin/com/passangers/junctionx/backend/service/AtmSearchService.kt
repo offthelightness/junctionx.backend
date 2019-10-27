@@ -112,7 +112,7 @@ class AtmSearchService {
         }
 
         val averageHistoricalWaitingTime = predictionService.getAverageHistoricalWaitingTime(atm.id)
-        val realtimeWaitingTime = atmIntentRepository.findCountOfInttentForATM(atm.id)
+        val realtimeWaitingTime = atmIntentRepository.findCountOfIntentForATM(atm.id)
 
         return AtmOutputData(atm, loadLevel, lineDistanceInMeters, realDistanceInMeters, averageHistoricalWaitingTime, 0.0)
     }
