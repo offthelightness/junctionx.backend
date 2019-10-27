@@ -1,8 +1,10 @@
 package com.passangers.junctionx.backend.service
 
 import com.passangers.junctionx.backend.model.Atm
+import com.passangers.junctionx.backend.repo.AtmIntentRepository
 import com.passangers.junctionx.backend.repo.AtmLoadRepository
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
@@ -15,12 +17,15 @@ class PredictionService {
         val AVERAGE_PEDESTRIAN_SPEED = 5000 / 60
         val STATISTICS_DAYS = 4
         val MINUTES_IN_STATISTICS_SLOT = 30
-        val ADDITIONAL_SEARCH_RADIUS_IN_METERS = 100
+        val ADDITIONAL_SEARCH_RADIUS_IN_METERS = 200
 
     }
 
     @Autowired
     lateinit var atmLoadRepository: AtmLoadRepository
+
+    @Autowired
+    lateinit var atmIntentRepository: AtmIntentRepository
 
     /**
      * ATM Model (M/M/I Markov chain’s model )
@@ -33,10 +38,11 @@ class PredictionService {
             now.toLocalTime().toSecondOfDay().toLong()
         ).firstOrNull()
 
-    return if (atmLoad != null) {
+        return if (atmLoad != null) {
 
-            val requestStream : Double = atmLoad.transactionsCount.toDouble() / STATISTICS_DAYS / MINUTES_IN_STATISTICS_SLOT
-            val serviceStream : Double = 1.0 / AVERAGE_SESSION_TIME_IN_MINUTES
+            val requestStream: Double =
+                atmLoad.transactionsCount.toDouble() / STATISTICS_DAYS / MINUTES_IN_STATISTICS_SLOT
+            val serviceStream: Double = 1.0 / AVERAGE_SESSION_TIME_IN_MINUTES
 
             val utilizationFactor = requestStream / serviceStream
 
@@ -44,5 +50,11 @@ class PredictionService {
         } else {
             0.0
         }
+    }
+
+    @Scheduled(fixedRate = 1000 * 10)
+    fun clearExpiredIntents() {
+        println("Fixed Rate Task :: Execution Time - " + LocalDateTime.now())
+        atmIntentRepository.clearExpiredIntents(LocalDateTime.now())
     }
 }

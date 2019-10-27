@@ -110,15 +110,7 @@ class AtmSearchService {
             now.toLocalTime().toSecondOfDay().toLong(),
             now.toLocalTime().toSecondOfDay().toLong()
         ).firstOrNull()
-        val atmLoadAbsoluteValue = atmLoad?.transactionsCount ?: 0
 
-        val loadLevel = when {
-            atmLoadAbsoluteValue < 10 -> LoadLevel.EMPTY
-            atmLoadAbsoluteValue < 20 -> LoadLevel.LEVEL_1
-            atmLoadAbsoluteValue < 30 -> LoadLevel.LEVEL_2
-            atmLoadAbsoluteValue < 40 -> LoadLevel.LEVEL_3
-            else -> LoadLevel.LEVEL_4
-        }
         val lineDistanceInMeters = if (userLocation != null) {
             geoService.getLineDistance(userLocation, GeoPoint(atm.geoX, atm.geoY))
         } else {
@@ -133,6 +125,16 @@ class AtmSearchService {
 
         val averageHistoricalWaitingTime = predictionService.getAverageHistoricalWaitingTime(atm.id)
         val realtimeWaitingTime = atmIntentRepository.findCountOfIntentForATM(atm.id.toString()).toDouble() * AVERAGE_SESSION_TIME_IN_MINUTES
+
+        val load = averageHistoricalWaitingTime + realtimeWaitingTime
+
+        val loadLevel = when {
+            load < 1 -> LoadLevel.EMPTY
+            load < 2 -> LoadLevel.LEVEL_1
+            load < 3 -> LoadLevel.LEVEL_2
+            load < 4 -> LoadLevel.LEVEL_3
+            else -> LoadLevel.LEVEL_4
+        }
 
         return AtmOutputData(
             atm,

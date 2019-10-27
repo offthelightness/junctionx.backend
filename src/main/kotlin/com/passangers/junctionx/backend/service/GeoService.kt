@@ -36,7 +36,9 @@ class GeoService {
 
     fun getRealDistance(pointA: GeoPoint, pointB: GeoPoint): Double? {
         val response = restTemplate.exchange(
-            "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial" +
+            "https://maps.googleapis.com/maps/api/distancematrix/json?" +
+                    "units=metric" +
+                    "&mode=walking" +
                     "&origins=${pointA.latitude},${pointA.longitude}" +
                     "&destinations=${pointB.latitude},${pointB.longitude}" +
                     "&key=$apiKey",
