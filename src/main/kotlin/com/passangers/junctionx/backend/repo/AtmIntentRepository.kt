@@ -10,8 +10,8 @@ import java.util.*
 
 interface AtmIntentRepository : JpaRepository<ATMIntent, UUID> {
     fun findByUserId(userId: String):List<ATMIntent>
-    @Query("SELECT count(atm) FROM ATMIntent atm WHERE atm.atmId = id")
-    fun findCountOfIntentForATM(id: UUID): Int
+    @Query("SELECT count(atm) FROM ATMIntent atm WHERE atm.atmId = ?1")
+    fun findCountOfIntentForATM(id: String): Int
 
 
 }

@@ -63,9 +63,9 @@ class AtmSearchService {
 
                 val potentialGoodATMsWithScore =  potentialGoodATMs.map {
                   return@map  AtmWithScore(it,
-                        it.realDistanceInMeters?.div(AVERAGE_PEDESTRIAN_SPEED) ?: Double.MAX_VALUE
-                                +  predictionService.getAverageHistoricalWaitingTime(it.atm.id)
-                                +  atmIntentRepository.findCountOfIntentForATM(it.atm.id) * AVERAGE_SESSION_TIME_IN_MINUTES)
+                      (it.realDistanceInMeters?.div(AVERAGE_PEDESTRIAN_SPEED) ?: Double.MAX_VALUE)
+                                +  (it.averageHistoricalWaitingTime ?: 0.0)
+                                +  (it.realtimeWaitingTime ?: 0.0))
                 }.sortedBy {
                     it.score
                 }
@@ -132,7 +132,7 @@ class AtmSearchService {
         }
 
         val averageHistoricalWaitingTime = predictionService.getAverageHistoricalWaitingTime(atm.id)
-        val realtimeWaitingTime = atmIntentRepository.findCountOfIntentForATM(atm.id).toDouble() * AVERAGE_SESSION_TIME_IN_MINUTES
+        val realtimeWaitingTime = atmIntentRepository.findCountOfIntentForATM(atm.id.toString()).toDouble() * AVERAGE_SESSION_TIME_IN_MINUTES
 
         return AtmOutputData(
             atm,
