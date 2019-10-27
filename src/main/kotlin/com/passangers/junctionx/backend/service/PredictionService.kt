@@ -52,7 +52,7 @@ class PredictionService {
         }
     }
 
-    @Scheduled(fixedRate = 1000 * 10)
+    @Scheduled(fixedRate = 1000 * 60)
     fun clearExpiredIntents() {
         println("Fixed Rate Task :: Execution Time - " + LocalDateTime.now())
         atmIntentRepository.clearExpiredIntents(LocalDateTime.now())
