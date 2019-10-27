@@ -10,10 +10,12 @@ import java.util.*
 @Service
 class PredictionService {
 
-    val AVERAGE_SESSION_TIME_IN_MINUTES = 3
-    val AVERAGE_PEDESTRIAN_SPEED = 5000 / 60
-    val STATISTICS_DAYS = 4
-    val MINUTES_IN_STATISTICS_SLOT = 30
+    companion object {
+        val AVERAGE_SESSION_TIME_IN_MINUTES = 3
+        val AVERAGE_PEDESTRIAN_SPEED = 5000 / 60
+        val STATISTICS_DAYS = 4
+        val MINUTES_IN_STATISTICS_SLOT = 30
+    }
 
     @Autowired
     lateinit var atmLoadRepository: AtmLoadRepository

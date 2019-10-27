@@ -1,7 +1,9 @@
 package com.passangers.junctionx.backend.endpoint
 
+import com.passangers.junctionx.backend.model.ATMIntent
 import com.passangers.junctionx.backend.model.Atm
 import com.passangers.junctionx.backend.model.GeoPoint
+import com.passangers.junctionx.backend.repo.AtmIntentRepository
 import com.passangers.junctionx.backend.repo.AtmLoadRepository
 import com.passangers.junctionx.backend.repo.AtmRepository
 import com.passangers.junctionx.backend.service.AtmSearchResult
@@ -10,9 +12,7 @@ import com.passangers.junctionx.backend.service.GeoService
 import com.passangers.junctionx.backend.service.SearchArea
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.io.File
 import java.nio.charset.Charset
 import java.util.*
@@ -31,6 +31,9 @@ class AtmController {
 
     @Autowired
     lateinit var atmSearchService: AtmSearchService
+
+    @Autowired
+    lateinit var atmIntentRepository: AtmIntentRepository
 
     @GetMapping("atm")
     fun getAtms(
@@ -225,6 +228,19 @@ class AtmController {
         )
         return ResponseEntity.ok(
             atmSearchResult
+        )
+    }
+
+    @PostMapping("atm/intent/v1")
+    fun postATMIntent(
+        @RequestBody(required = false)
+        atmIntent: ATMIntent?
+    ): ResponseEntity<Any> {
+        atmIntent?.let {
+            atmIntentRepository.save(it)
+        }
+        return ResponseEntity.ok(
+            Any()
         )
     }
 }

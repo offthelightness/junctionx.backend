@@ -3,6 +3,7 @@ package com.passangers.junctionx.backend.service
 import com.passangers.junctionx.backend.model.Atm
 import com.passangers.junctionx.backend.model.GeoPoint
 import com.passangers.junctionx.backend.model.LoadLevel
+import com.passangers.junctionx.backend.repo.AtmIntentRepository
 import com.passangers.junctionx.backend.repo.AtmLoadRepository
 import com.passangers.junctionx.backend.repo.AtmRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,6 +24,9 @@ class AtmSearchService {
 
     @Autowired
     lateinit var predictionService: PredictionService
+
+    @Autowired
+    lateinit var atmIntentRepository: AtmIntentRepository
 
     fun getAtms(
         searchArea: SearchArea,
@@ -108,7 +112,7 @@ class AtmSearchService {
         }
 
         val averageHistoricalWaitingTime = predictionService.getAverageHistoricalWaitingTime(atm.id)
-        val realtimeWaitingTime = predictionService.getAverageHistoricalWaitingTime(atm.id)
+        val realtimeWaitingTime = atmIntentRepository.findCountOfInttentForATM(atm.id)
 
         return AtmOutputData(atm, loadLevel, lineDistanceInMeters, realDistanceInMeters, averageHistoricalWaitingTime, 0.0)
     }
