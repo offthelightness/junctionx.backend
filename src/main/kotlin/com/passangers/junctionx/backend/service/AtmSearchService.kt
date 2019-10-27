@@ -14,33 +14,48 @@ class AtmSearchService {
 
     @Autowired
     lateinit var atmRepository: AtmRepository
+
     @Autowired
     lateinit var atmLoadRepository: AtmLoadRepository
 
     @Autowired
     lateinit var geoService: GeoService
 
+    @Autowired
+    lateinit var predictionService: PredictionService
+
     fun getAtms(
         searchArea: SearchArea,
         userLocation: GeoPoint?,
-        canDeposit: Boolean?
+        canDeposit: Boolean?,
+        usePrediction : Boolean?
     ): AtmSearchResult {
         val findAtms = findAtms(searchArea, canDeposit)
 
         val atmOutputDataList = findAtms.map {
             convertToAtmOutputData(it, userLocation)
-        }.sortedBy { it.distanceInMeters ?: 0.0 }
+        }.sortedBy { it.lineDistanceInMeters ?: 0.0 }
 
-        val closestAtm = atmOutputDataList.firstOrNull()
-//        val furthestAtm = atmOutputDataList.last()
-//
-//        val bestAtm = atmOutputDataList.map {
-//            calculateScore(it)
-//        }.sortedBy { it.score }.firstOrNull()
-        return AtmSearchResult(
-            closestAtm,
-            atmOutputDataList
-        )
+        if (userLocation == null) {
+            return AtmSearchResult(
+                null,
+                atmOutputDataList
+            )
+        } else {
+            return if (usePrediction == null || usePrediction == false ) {
+                val closestAtm = atmOutputDataList.firstOrNull()
+                AtmSearchResult(
+                    closestAtm,
+                    atmOutputDataList
+                )
+            } else {
+
+                AtmSearchResult(
+                    null,
+                    atmOutputDataList
+                )
+            }
+        }
     }
 
     private fun findAtms(
@@ -67,7 +82,7 @@ class AtmSearchService {
     private fun convertToAtmOutputData(atm: Atm, userLocation: GeoPoint?): AtmOutputData {
         val now = LocalDateTime.now()
         val atmLoad = atmLoadRepository.findByAtmIDForConcreteDayAndPeriod(
-            atm.id,now.dayOfWeek,
+            atm.id, now.dayOfWeek,
             now.toLocalTime().toSecondOfDay().toLong(),
             now.toLocalTime().toSecondOfDay().toLong()
         ).firstOrNull()
@@ -80,12 +95,22 @@ class AtmSearchService {
             atmLoadAbsoluteValue < 40 -> LoadLevel.LEVEL_3
             else -> LoadLevel.LEVEL_4
         }
-        val distanceInMeters = if (userLocation == null) {
-            null
+        val lineDistanceInMeters = if (userLocation != null) {
+            geoService.getLineDistance(userLocation, GeoPoint(atm.geoX, atm.geoY))
         } else {
-            geoService.getSimpleDistance(userLocation, GeoPoint(atm.geoX, atm.geoY))
+            null
         }
-        return AtmOutputData(atm, loadLevel, distanceInMeters)
+
+        val realDistanceInMeters = if (userLocation != null) {
+            geoService.getRealDistance(userLocation, GeoPoint(atm.geoX, atm.geoY))
+        } else {
+            null
+        }
+
+        val averageHistoricalWaitingTime = predictionService.getAverageHistoricalWaitingTime(atm.id)
+        val realtimeWaitingTime = predictionService.getAverageHistoricalWaitingTime(atm.id)
+
+        return AtmOutputData(atm, loadLevel, lineDistanceInMeters, realDistanceInMeters, averageHistoricalWaitingTime, 0.0)
     }
 }
 
@@ -94,15 +119,13 @@ data class AtmSearchResult(
     val items: List<AtmOutputData>
 )
 
-data class AtmWithScore(
-    val atmOutputData: AtmOutputData,
-    val score: Double
-)
-
 data class AtmOutputData(
     val atm: Atm,
     val loadLevel: LoadLevel,
-    val distanceInMeters: Double?
+    val lineDistanceInMeters: Double?,
+    val realDistanceInMeters: Double?,
+    val averageHistoricalWaitingTime: Double?,
+    val realtimeWaitingTime: Double?
 )
 
 data class SearchArea(

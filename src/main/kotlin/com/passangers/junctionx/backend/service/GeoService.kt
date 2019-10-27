@@ -2,12 +2,21 @@ package com.passangers.junctionx.backend.service
 
 import com.passangers.junctionx.backend.model.GeoPoint
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.ParameterizedTypeReference
+import org.springframework.http.HttpMethod
 
 
 @Service
 class GeoService {
 
-    fun getSimpleDistance(pointA: GeoPoint, pointB: GeoPoint): Double {
+    private val apiKey = "AIzaSyCsCnwTyXYy2bIkXWBcwuDT3tf7DtuBj94"
+
+    @Autowired
+    lateinit var restTemplate: RestTemplate
+
+    fun getLineDistance(pointA: GeoPoint, pointB: GeoPoint): Double {
 
         var R = 6371e3; // metres
         var φ1 = Math.toRadians(pointA.latitude)
@@ -22,5 +31,21 @@ class GeoService {
 
         var d = R * c;
         return d;
+    }
+
+
+    fun getRealDistance(pointA: GeoPoint, pointB: GeoPoint): Double {
+        restTemplate.exchange(
+            "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial" +
+                    "&origins=${pointA.latitude},${pointA.longitude}" +
+                    "&destinations=${pointB.latitude},${pointB.longitude}" +
+                    "&key=$apiKey",
+            HttpMethod.GET,
+            null,
+            object : ParameterizedTypeReference<Any>() {
+
+            })
+
+        return 0.0
     }
 }

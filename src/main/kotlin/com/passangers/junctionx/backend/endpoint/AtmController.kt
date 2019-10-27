@@ -1,7 +1,6 @@
 package com.passangers.junctionx.backend.endpoint
 
 import com.passangers.junctionx.backend.model.Atm
-import com.passangers.junctionx.backend.model.AtmLoad
 import com.passangers.junctionx.backend.model.GeoPoint
 import com.passangers.junctionx.backend.repo.AtmLoadRepository
 import com.passangers.junctionx.backend.repo.AtmRepository
@@ -16,9 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.io.File
 import java.nio.charset.Charset
-import java.time.DayOfWeek
-import java.time.LocalTime
-import java.time.temporal.TemporalUnit
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -183,7 +179,7 @@ class AtmController {
         }.map {
             AtmWithDistance(
                 it,
-                geoService.getSimpleDistance(
+                geoService.getLineDistance(
                     userLocation, GeoPoint(
                         it.geoX, it.geoY
                     )
@@ -225,7 +221,7 @@ class AtmController {
                 sw.split(',')[0].toDouble(),
                 ne.split(',')[1].toDouble(),
                 sw.split(',')[1].toDouble()
-            ), userLocation, canDeposit
+            ), userLocation, canDeposit, usePrediction
         )
         return ResponseEntity.ok(
             atmSearchResult
